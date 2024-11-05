@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Campo para Qd (Caudal de diseño) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Qd (Caudal de diseño)"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/inputQd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="(m^3/s)" />
+
+    <!-- Campo para Dd (Diámetro de diseño) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dd (Diámetro de diseño)"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/inputDd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="(cm)" />
+
+    <!-- Campo para n (Número de Manning) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="n (Número de Manning)"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/inputN"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="Ingrese número de Manning" />
+
+    <!-- Campo para S (Pendiente) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="S (Pendiente)"
+        android:textSize="16sp" />
+
+    <EditText
+        android:id="@+id/inputS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="% ej= 0.01" />
+
+    <!-- Botón de cálculo -->
+    <Button
+        android:id="@+id/calculateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calcular"
+        android:layout_gravity="center_horizontal"
+        android:padding="8dp"
+        android:layout_marginTop="16dp" />
+
+    <!-- Campo de salida de resultados -->
+    <TextView
+        android:id="@+id/outputResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Resultado:"
+        android:textSize="18sp"
+        android:paddingTop="16dp"
+        android:textColor="@android:color/black" />
+
+</LinearLayout>
