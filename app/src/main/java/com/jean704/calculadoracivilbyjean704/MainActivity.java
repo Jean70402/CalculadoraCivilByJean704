@@ -51,24 +51,53 @@ public class MainActivity extends AppCompatActivity {
         velocidad= (1/n)*radioHidraulicoCalc*Math.pow(s,0.5);
         qCalc= velocidad*areaCalc*1000;
     }
+    public void mostrarResultados(double[] resultados, String[] descripciones, String[] unidades) {
+        // Asegura que todos los arreglos tengan el mismo tamaño
+        if (resultados.length != descripciones.length || descripciones.length != unidades.length) {
+            Toast.makeText(this, "Los parámetros no coinciden en tamaño.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Genera el texto completo con descripciones, resultados y unidades
+        StringBuilder fullText = new StringBuilder();
+        for (int i = 0; i < resultados.length; i++) {
+            String resultText = String.format("%s: %.5f %s\n", descripciones[i], resultados[i], unidades[i]);
+            fullText.append(resultText);
+        }
 
-    public void mostrarResultado(double result) {
-        // Formatea el resultado a 5 decimales
-        String resultText = String.format("%.5f", result);
-        // Crea el texto completo con el valor formateado
-        String fullText = "Resultado: " + resultText + " [l/s]";
-        // Crea un SpannableString con el texto completo
-        SpannableString spannable = new SpannableString(fullText);
+        // Crea el SpannableString y aplica el color solo a los valores
+        SpannableString spannable = new SpannableString(fullText.toString());
+        int color = getResources().getColor(R.color.teal_700);
 
-        // Aplica el color solo al valor de "result"
-        int color = getResources().getColor(R.color.teal_700); // Usa el color definido en colors.xml o uno de la clase Color
-        spannable.setSpan(new ForegroundColorSpan(color),
-                "Resultado: ".length(),
-                "Resultado: ".length() + resultText.length(),
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // Aplicar el color a cada resultado
+        int index = 0;
+
+        for (int i = 0; i < resultados.length; i++) {
+            // Construir cada línea de texto
+            String descripcion = descripciones[i] + ": ";
+            String resultText = String.format("%.5f", resultados[i]);
+            String unidad = " " + unidades[i] + "\n";
+
+            // Encontrar el índice de inicio y fin para el valor a colorear
+            int start = index + descripcion.length();
+            int end = start + resultText.length();
+
+            // Aplicar el color solo al valor del resultado
+            spannable.setSpan(
+                    new ForegroundColorSpan(color),
+                    start,
+                    end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // Actualizar el índice para la siguiente línea
+            index += descripcion.length() + resultText.length() + unidad.length();
+        }
         // Configura el texto en el TextView
         outputResult.setText(spannable);
     }
+
+
+
     public void calculateResult() {
         try {
             // Obtener y convertir los valores de entrada
@@ -86,8 +115,10 @@ public class MainActivity extends AppCompatActivity {
                 repetirCalculo(y); // Calcula qCalc
                 iterac++;
             }
-            //Log.d("calculo", "Resultado final: qCalc=" + qCalc);
-            mostrarResultado(y);
+            double[] resultados = { y, areaCalc, perimetroCalc, velocidad, qCalc };
+            String[] descripciones = {"Calado", "Área", "Perímetro","Velocidad","Caudal"};
+            String[] unidades = {"(m)", "(m^2)", "(m)","(m/s)","(m^3/s)"};
+            mostrarResultados(resultados,descripciones,unidades);
         } catch (NumberFormatException e) {
             // Mostrar un mensaje si algún campo no está lleno o contiene valores no numéricos
             Toast.makeText(this, "Por favor, ingresa todos los valores correctamente.", Toast.LENGTH_SHORT).show();
