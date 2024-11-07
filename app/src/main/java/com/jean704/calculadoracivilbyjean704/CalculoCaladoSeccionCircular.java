@@ -1,12 +1,13 @@
 package com.jean704.calculadoracivilbyjean704;
 
-import androidx.appcompat.app.AppCompatActivity;
+import static android.content.ContentValues.TAG;
 
-import android.content.Intent;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,15 +20,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
     private TextView outputResult;
 
     double thetha,areaCalc,perimetroCalc,radioHidraulicoCalc,velocidad,qCalc,qd,dd,n,s,y,radio;
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,18 +41,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
                 calculateResult();
             }
         });
-
-        Button backButton = findViewById(R.id.button_back_to_main);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(CalculoCaladoSeccionCircular.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                finish();
-            }
-        });
-
     }
     public void repetirCalculo(double yCalculo){
         y = yCalculo;
@@ -71,24 +51,53 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         velocidad= (1/n)*radioHidraulicoCalc*Math.pow(s,0.5);
         qCalc= velocidad*areaCalc*1000;
     }
+    public void mostrarResultados(double[] resultados, String[] descripciones, String[] unidades) {
+        // Asegura que todos los arreglos tengan el mismo tamaño
+        if (resultados.length != descripciones.length || descripciones.length != unidades.length) {
+            Toast.makeText(this, "Los parámetros no coinciden en tamaño.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Genera el texto completo con descripciones, resultados y unidades
+        StringBuilder fullText = new StringBuilder();
+        for (int i = 0; i < resultados.length; i++) {
+            String resultText = String.format("%s: %.5f %s\n", descripciones[i], resultados[i], unidades[i]);
+            fullText.append(resultText);
+        }
 
-    public void mostrarResultado(double result) {
-        // Formatea el resultado a 5 decimales
-        String resultText = String.format("%.5f", result);
-        // Crea el texto completo con el valor formateado
-        String fullText = "Resultado: " + resultText + " [l/s]";
-        // Crea un SpannableString con el texto completo
-        SpannableString spannable = new SpannableString(fullText);
+        // Crea el SpannableString y aplica el color solo a los valores
+        SpannableString spannable = new SpannableString(fullText.toString());
+        int color = getResources().getColor(R.color.teal_700);
 
-        // Aplica el color solo al valor de "result"
-        int color = getResources().getColor(R.color.teal_700); // Usa el color definido en colors.xml o uno de la clase Color
-        spannable.setSpan(new ForegroundColorSpan(color),
-                "Resultado: ".length(),
-                "Resultado: ".length() + resultText.length(),
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // Aplicar el color a cada resultado
+        int index = 0;
+
+        for (int i = 0; i < resultados.length; i++) {
+            // Construir cada línea de texto
+            String descripcion = descripciones[i] + ": ";
+            String resultText = String.format("%.5f", resultados[i]);
+            String unidad = " " + unidades[i] + "\n";
+
+            // Encontrar el índice de inicio y fin para el valor a colorear
+            int start = index + descripcion.length();
+            int end = start + resultText.length();
+
+            // Aplicar el color solo al valor del resultado
+            spannable.setSpan(
+                    new ForegroundColorSpan(color),
+                    start,
+                    end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+
+            // Actualizar el índice para la siguiente línea
+            index += descripcion.length() + resultText.length() + unidad.length();
+        }
         // Configura el texto en el TextView
         outputResult.setText(spannable);
     }
+
+
+
     public void calculateResult() {
         try {
             // Obtener y convertir los valores de entrada
@@ -106,8 +115,10 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
                 repetirCalculo(y); // Calcula qCalc
                 iterac++;
             }
-            //Log.d("calculo", "Resultado final: qCalc=" + qCalc);
-            mostrarResultado(y);
+            double[] resultados = { y, areaCalc, perimetroCalc, velocidad, qCalc };
+            String[] descripciones = {"Calado", "Área", "Perímetro","Velocidad","Caudal"};
+            String[] unidades = {"(m)", "(m^2)", "(m)","(m/s)","(m^3/s)"};
+            mostrarResultados(resultados,descripciones,unidades);
         } catch (NumberFormatException e) {
             // Mostrar un mensaje si algún campo no está lleno o contiene valores no numéricos
             Toast.makeText(this, "Por favor, ingresa todos los valores correctamente.", Toast.LENGTH_SHORT).show();
