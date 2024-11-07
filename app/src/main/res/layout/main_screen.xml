@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Botones para cambiar entre pantallas -->
+    <Button
+        android:id="@+id/button_screen1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 1" />
+
+    <Button
+        android:id="@+id/button_screen2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 2" />
+
+    <Button
+        android:id="@+id/button_screen3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 3" />
+
+    <Button
+        android:id="@+id/button_screen4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 4" />
+
+    <Button
+        android:id="@+id/button_screen5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 5" />
+
+    <Button
+        android:id="@+id/button_screen6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 6" />
+
+    <Button
+        android:id="@+id/button_screen7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 7" />
+
+    <Button
+        android:id="@+id/button_screen8"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ir a Pantalla 8" />
+
+</LinearLayout>
