@@ -168,17 +168,38 @@
             android:layout_marginTop="16dp"
             android:layout_gravity="center" />
 
-        <!-- Campo para mostrar el resultado -->
-        <TextView
-            android:id="@+id/resultTextView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Contenedor con un tamaño fijo para el GridLayout -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:orientation="vertical"
+                android:paddingTop="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+            <!-- GridLayout donde se mostrarán los círculos -->
+            <GridLayout
+                android:id="@+id/varillaGrid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:columnCount="1" />
+        </LinearLayout>
+
+        <!-- Layout para los botones "+" y "-" -->
+        <LinearLayout
+            android:id="@+id/buttonLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Resultado:"
-            android:textSize="18sp"
-            android:textColor="@android:color/black"
-            android:paddingTop="16dp"
-            android:layout_gravity="center" />
+            android:orientation="vertical" />
+
+    </LinearLayout>
 
     </LinearLayout>
 </ScrollView>
