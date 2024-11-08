@@ -16,7 +16,7 @@
         android:id="@+id/button_screen2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Ir a Pantalla 2" />
+        android:text="Cálculo Columnas" />
 
     <Button
         android:id="@+id/button_screen3"

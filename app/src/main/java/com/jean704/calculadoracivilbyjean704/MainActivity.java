@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Configuración de botones
         setupButton(R.id.button_screen1, CalculoCaladoSeccionCircular.class);
-        // setupButton(R.id.button_screen2, Screen2Activity.class);
+        setupButton(R.id.button_screen2, CalculoColumnas.class);
         //setupButton(R.id.button_screen3, Screen3Activity.class);
         //setupButton(R.id.button_screen4, Screen4Activity.class);
         //setupButton(R.id.button_screen5, Screen5Activity.class);

@@ -30,5 +30,8 @@
         <activity
             android:name=".CalculoCaladoSeccionCircular"
             android:exported="true" />
+        <activity
+            android:name=".CalculoColumnas"
+            android:exported="true" />
     </application>
 </manifest>

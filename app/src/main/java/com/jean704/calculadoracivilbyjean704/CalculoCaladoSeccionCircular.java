@@ -33,6 +33,14 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         inputS = findViewById(R.id.inputS);
         outputResult = findViewById(R.id.outputResult);
         Button calculateButton = findViewById(R.id.calculateButton);
+        Button buttonBackToMain = findViewById(R.id.button_back_to_main);
+
+        buttonBackToMain.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish(); // Cierra la actividad actual para regresar a la anterior (menú principal)
+            }
+        });
 
         // Configuramos la acción del botón de cálculo
         calculateButton.setOnClickListener(new View.OnClickListener() {
@@ -124,5 +132,4 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             Toast.makeText(this, "Por favor, ingresa todos los valores correctamente.", Toast.LENGTH_SHORT).show();
         }
     }
-
 }
