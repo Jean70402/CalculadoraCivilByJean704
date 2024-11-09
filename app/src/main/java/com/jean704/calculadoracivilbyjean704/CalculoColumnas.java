@@ -1,19 +1,18 @@
 package com.jean704.calculadoracivilbyjean704;
 
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -32,6 +31,7 @@ public class CalculoColumnas extends AppCompatActivity {
     private ArrayList<Integer> numCirculosPorFila; // Lista para almacenar el número de círculos por fila
 
     int maxCircles = 9; // Número máximo de círculos en una fila
+    int tamanoCircles=80;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,17 +125,34 @@ public class CalculoColumnas extends AppCompatActivity {
             TextView circuloIzq = crearCirculo();
             filaCirculosLayout.addView(circuloIzq);
 
+
+
             // Contenedor central para círculos intermedios
             LinearLayout contenedorIntermedios = new LinearLayout(this);
             contenedorIntermedios.setOrientation(LinearLayout.HORIZONTAL);
+            contenedorIntermedios.setGravity(Gravity.START);
+            //añadir borde de depuración
+            //contenedorIntermedios.setBackground(ContextCompat.getDrawable(this, R.drawable.debug_border));
 
             LinearLayout.LayoutParams paramsIntermediosContainer = new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            paramsIntermediosContainer.gravity = Gravity.CENTER;
             contenedorIntermedios.setLayoutParams(paramsIntermediosContainer);
-            contenedorIntermedios.setBackground(ContextCompat.getDrawable(this, R.drawable.debug_border));
             filaCirculosLayout.addView(contenedorIntermedios);
 
+            // Listener para obtener el ancho del contenedor central
+            int finalI = i;
+            contenedorIntermedios.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    contenedorIntermedios.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    int anchoContenedor = contenedorIntermedios.getWidth();
+
+                    Log.d("CalculoColumnas", "Ancho del contenedor intermedios en fila " + finalI + ": " + anchoContenedor);
+
+                    // Actualizar círculos usando el ancho del contenedor
+                    agregarCirculosDesdeCentro(finalI, anchoContenedor);
+                }
+            });
 
             // Crear círculo derecho estático
             TextView circuloDer = crearCirculo();
@@ -170,11 +187,50 @@ public class CalculoColumnas extends AppCompatActivity {
 
     private TextView crearCirculo() {
         TextView circle = new TextView(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(80, 80);
-        params.setMargins(8, 8, 8, 8);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(tamanoCircles, tamanoCircles);
+        params.setMargins(0, 0, 0, 0);
         circle.setLayoutParams(params);
         circle.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
         return circle;
+    }
+
+    private void agregarCirculosDesdeCentro(int fila, int anchoContenedor) {
+        LinearLayout contenedorIntermedios = filasCirculos.get(fila);
+        contenedorIntermedios.removeAllViews();
+
+        // Solo círculos intermedios (sin contar los extremos)
+        int numCirculos = numCirculosPorFila.get(fila) - 2;
+        if (numCirculos <= 0) return;
+
+        // Tamaño de los círculos
+
+        // Verificar si los círculos caben en el contenedor
+        int totalCirculosAncho = tamanoCircles * numCirculos + (maxCircles-2) * numCirculos; // Tamaño de los círculos + márgenes
+        if (totalCirculosAncho > anchoContenedor) {
+            // Si no caben, limitamos el número de círculos
+            numCirculos = (anchoContenedor - 8 * numCirculos) / tamanoCircles;
+        }
+
+        // Calcular el espacio entre círculos
+        int espacioEntreCirculos = (anchoContenedor - tamanoCircles * numCirculos - (maxCircles-2) * numCirculos) / (numCirculos + 1);
+
+        // Eliminar la gravedad centrada
+        contenedorIntermedios.setGravity(Gravity.START);  // Establece la alineación al inicio (izquierda)
+
+        // Aplicar el mismo margen a todos los círculos
+        for (int j = 0; j < numCirculos; j++) {
+            TextView circuloIntermedio = crearCirculo();
+
+            // Ajustar margen izquierdo para espaciar los círculos
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(tamanoCircles, tamanoCircles);
+            params.leftMargin = espacioEntreCirculos+(tamanoCircles/(maxCircles));  // Aplica el mismo margen a todos los círculos
+            circuloIntermedio.setLayoutParams(params);
+
+            contenedorIntermedios.addView(circuloIntermedio);
+
+            // Log para depuración
+            Log.d("CalculoColumnas", "Círculo intermedio " + j + " en fila " + fila + ": posición x = " + params.leftMargin);
+        }
     }
 
 
@@ -184,8 +240,11 @@ public class CalculoColumnas extends AppCompatActivity {
         // Solo se pueden agregar círculos intermedios, sin afectar los extremos
         if (numCirculos < maxCircles) {
             numCirculosPorFila.set(fila, numCirculos + 1);
-            actualizarCirculos(fila);
-            Log.d("CalculoColumnas", "Número de círculos en fila " + fila + ": " + numCirculosPorFila.get(fila));
+
+            // Usar el ancho actual del contenedor para reposicionar los círculos
+            LinearLayout contenedorIntermedios = filasCirculos.get(fila);
+            int anchoContenedor = contenedorIntermedios.getWidth();
+            agregarCirculosDesdeCentro(fila, anchoContenedor);
         }
     }
 
@@ -194,27 +253,13 @@ public class CalculoColumnas extends AppCompatActivity {
 
         // Asegurarse de que no haya menos de 2 círculos (uno izquierdo y uno derecho)
         if (numCirculos > 2) {
-            // Si hay más de 2 círculos, eliminar uno intermedio
-            numCirculosPorFila.set(fila, numCirculos - 1);  // Disminuir el número de círculos
-            actualizarCirculos(fila);
-            Log.d("CalculoColumnas", "Número de círculos en fila " + fila + ": " + numCirculosPorFila.get(fila));
+            numCirculosPorFila.set(fila, numCirculos - 1);
+
+            // Usar el ancho actual del contenedor para reposicionar los círculos
+            LinearLayout contenedorIntermedios = filasCirculos.get(fila);
+            int anchoContenedor = contenedorIntermedios.getWidth();
+            agregarCirculosDesdeCentro(fila, anchoContenedor);
         }
     }
-
-
-    private void actualizarCirculos(int fila) {
-        LinearLayout contenedorIntermedios = filasCirculos.get(fila);
-        contenedorIntermedios.removeAllViews();
-
-        int numCirculos = numCirculosPorFila.get(fila);
-        int numEspacios = numCirculos - 2;
-
-        for (int j = 0; j < numEspacios; j++) {
-            TextView circuloIntermedio = crearCirculo();
-            contenedorIntermedios.addView(circuloIntermedio);
-        }
-    }
-
-
 
 }
