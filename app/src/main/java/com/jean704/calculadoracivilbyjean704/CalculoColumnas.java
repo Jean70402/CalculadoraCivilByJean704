@@ -2,6 +2,7 @@ package com.jean704.calculadoracivilbyjean704;
 
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -76,13 +77,13 @@ public class CalculoColumnas extends AppCompatActivity {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
 
         // Llamar al método inicial para crear las filas y botones
         generarFilasConBotones(Integer.parseInt(spinnerFilasAcero.getSelectedItem().toString()));
     }
-
 
 
     private void calculateProduct() {
@@ -110,11 +111,10 @@ public class CalculoColumnas extends AppCompatActivity {
         varillaGrid.removeAllViews();
         buttonLayout.removeAllViews();
         filasCirculos.clear();
-        circulosPorFila.clear();
 
         // Generar las filas y los botones "+" y "-" correspondientes
         for (int i = 0; i < numFilas; i++) {
-            final int filaIndex = i; // Índice de la fila actual
+            final int filaIndex = i;
 
             // Crear una fila para los círculos
             LinearLayout filaCirculosLayout = new LinearLayout(this);
@@ -122,63 +122,103 @@ public class CalculoColumnas extends AppCompatActivity {
             filaCirculosLayout.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-            // Añadir la fila de círculos al GridLayout
             varillaGrid.addView(filaCirculosLayout);
-
-            // Crear una fila de botones "+"
-            LinearLayout buttonRow = new LinearLayout(this);
-            buttonRow.setOrientation(LinearLayout.HORIZONTAL);
-            buttonRow.setGravity(Gravity.CENTER);
+            filasCirculos.add(filaCirculosLayout);
 
             // Crear el botón "+"
             Button botonMas = new Button(this);
             botonMas.setText("+");
-            botonMas.setOnClickListener(v -> agregarCirculo(filaIndex));
 
             // Crear el botón "-"
             Button botonMenos = new Button(this);
             botonMenos.setText("-");
-            botonMenos.setOnClickListener(v -> quitarCirculo(filaIndex));
 
             // Añadir los botones a la fila de botones
+            LinearLayout buttonRow = new LinearLayout(this);
+            buttonRow.setGravity(Gravity.CENTER);
             buttonRow.addView(botonMas);
             buttonRow.addView(botonMenos);
 
-            // Añadir la fila de botones al layout de botones
             buttonLayout.addView(buttonRow);
 
-            // Guardar la referencia de la fila de círculos y el contador de círculos
-            filasCirculos.add(filaCirculosLayout);
-            circulosPorFila.add(0); // Inicializamos el contador de círculos en 0
+            // Crear 2 círculos iniciales (uno a cada extremo)
+            for (int j = 0; j < 9; j++) {
+                TextView space = new TextView(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(80, 80);
+                params.setMargins(8, 8, 8, 8);
+                space.setLayoutParams(params);
+                space.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
+
+                if (j == 0 || j == 8) {
+                    space.setTag("circle");
+                } else {
+                    space.setTag("empty");
+                    space.setVisibility(View.INVISIBLE);
+                }
+                filaCirculosLayout.addView(space);
+            }
+
+            botonMas.setOnClickListener(v -> {
+                Log.d("CalculoColumnas", "Presionando botón '+' en fila: " + filaIndex);
+                agregarCirculo(filaCirculosLayout);
+            });
+
+            botonMenos.setOnClickListener(v -> {
+                Log.d("CalculoColumnas", "Presionando botón '-' en fila: " + filaIndex);
+                eliminarUltimoCirculo(filaCirculosLayout);
+            });
         }
     }
 
-    private void agregarCirculo(int filaIndex) {
-        // Crear un nuevo círculo (usaremos TextView para los círculos)
-        TextView circle = new TextView(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(80, 80);
-        params.setMargins(8, 8, 8, 8);
-        circle.setLayoutParams(params);
-        circle.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape)); // Estilo de círculo
-
-        // Añadir el círculo a la fila correspondiente
-        filasCirculos.get(filaIndex).addView(circle);
-
-        // Actualizar el contador de círculos para esa fila
-        int count = circulosPorFila.get(filaIndex);
-        circulosPorFila.set(filaIndex, count + 1);
-    }
-
-    private void quitarCirculo(int filaIndex) {
-        // Eliminar el último círculo de la fila si existe
-        LinearLayout filaCirculosLayout = filasCirculos.get(filaIndex);
-        if (filaCirculosLayout.getChildCount() > 0) {
-            filaCirculosLayout.removeViewAt(filaCirculosLayout.getChildCount() - 1);
+    private void agregarCirculo(LinearLayout filaCirculosLayout) {
+        // Obtener las posiciones de los círculos fijos visibles (al inicio y al final)
+        ArrayList<Integer> posiciones = new ArrayList<>();
+        for (int i = 0; i < filaCirculosLayout.getChildCount(); i++) {
+            TextView circle = (TextView) filaCirculosLayout.getChildAt(i);
+            if (circle.getTag() != null && circle.getTag().equals("circle") && circle.getVisibility() == View.VISIBLE) {
+                posiciones.add(i);
+            }
         }
 
-        // Actualizar el contador de círculos para esa fila
-        int count = circulosPorFila.get(filaIndex);
-        circulosPorFila.set(filaIndex, Math.max(count - 1, 0));
+        // Si hay exactamente 2 círculos visibles (en los extremos), agregar un nuevo círculo intermedio
+        if (posiciones.size() == 2) {
+            int posInicio = posiciones.get(0);
+            int posFin = posiciones.get(1);
+            int nuevaPosicion = (posInicio + posFin) / 2;
+
+            TextView space = (TextView) filaCirculosLayout.getChildAt(nuevaPosicion);
+            space.setVisibility(View.VISIBLE);
+            space.setTag("circle"); // Marcar como un círculo
+            Log.d("AgregarCirculo", "Círculo añadido en la posición intermedia: " + nuevaPosicion);
+
+        } else if (posiciones.size() > 2) {
+            // Si ya hay círculos intermedios, encontrar la primera posición vacía entre ellos para añadir otro
+            for (int i = 1; i < posiciones.size(); i++) {
+                int posInicio = posiciones.get(i - 1);
+                int posFin = posiciones.get(i);
+                int nuevaPosicion = (posInicio + posFin) / 2;
+
+                TextView space = (TextView) filaCirculosLayout.getChildAt(nuevaPosicion);
+                if (space.getVisibility() == View.INVISIBLE) {
+                    space.setVisibility(View.VISIBLE);
+                    space.setTag("circle");
+                    Log.d("AgregarCirculo", "Nuevo círculo añadido entre posiciones " + posInicio + " y " + posFin);
+                    break; // Solo agregar un círculo
+                }
+            }
+        }
+    }
+
+    private void eliminarUltimoCirculo(LinearLayout filaCirculosLayout) {
+        // Recorrer desde el final para eliminar el último círculo intermedio añadido
+        for (int i = filaCirculosLayout.getChildCount() - 2; i > 0; i--) {
+            TextView circle = (TextView) filaCirculosLayout.getChildAt(i);
+            if (circle.getTag() != null && circle.getTag().equals("circle") && circle.getVisibility() == View.VISIBLE) {
+                circle.setVisibility(View.INVISIBLE); // Ocultar el último círculo visible
+                Log.d("EliminarUltimoCirculo", "Círculo eliminado en la posición: " + i);
+                break; // Detener el ciclo después de eliminar uno
+            }
+        }
     }
 
 }
