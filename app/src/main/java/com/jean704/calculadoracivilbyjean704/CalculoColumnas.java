@@ -106,74 +106,77 @@ public class CalculoColumnas extends AppCompatActivity {
     }
 
     private void generarFilasConBotones(int numFilas) {
-        // Limpiar cualquier vista anterior
         varillaGrid.removeAllViews();
         filasCirculos.clear();
-        buttonLayout.removeAllViews();  // Limpiar botones previos
-        numCirculosPorFila.clear();  // Limpiar el contador de círculos
+        buttonLayout.removeAllViews();
+        numCirculosPorFila.clear();
 
-        // Generar filas con círculos en los extremos
         for (int i = 0; i < numFilas; i++) {
-            // Crear un LinearLayout con orientación horizontal para la fila de círculos
             LinearLayout filaCirculosLayout = new LinearLayout(this);
             filaCirculosLayout.setOrientation(LinearLayout.HORIZONTAL);
             filaCirculosLayout.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-            // Añadir la fila al contenedor de varillas
             varillaGrid.addView(filaCirculosLayout);
             filasCirculos.add(filaCirculosLayout);
+            numCirculosPorFila.add(2);
 
-            // Inicializar el contador de círculos por fila
-            numCirculosPorFila.add(2); // Empieza con 2 círculos
+            // Crear círculo izquierdo estático
+            TextView circuloIzq = crearCirculo();
+            filaCirculosLayout.addView(circuloIzq);
 
-            // Crear los círculos iniciales (uno en cada extremo)
-            for (int j = 0; j < maxCircles; j++) {
-                TextView space = new TextView(this);
-                LinearLayout.LayoutParams circleParams = new LinearLayout.LayoutParams(80, 80);
-                circleParams.setMargins(8, 8, 8, 8);
-                space.setLayoutParams(circleParams);
-                space.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
+            // Contenedor central para círculos intermedios
+            LinearLayout contenedorIntermedios = new LinearLayout(this);
+            contenedorIntermedios.setOrientation(LinearLayout.HORIZONTAL);
 
-                // Los círculos en los extremos siempre están visibles
-                if (j == 0 || j == maxCircles - 1) {
-                    space.setVisibility(View.VISIBLE);
-                    space.setTag("circle");
-                } else {
-                    space.setVisibility(View.INVISIBLE); // Invisible para los círculos intermedios
-                }
-                filaCirculosLayout.addView(space);
-            }
+            LinearLayout.LayoutParams paramsIntermediosContainer = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+            paramsIntermediosContainer.gravity = Gravity.CENTER;
+            contenedorIntermedios.setLayoutParams(paramsIntermediosContainer);
+            contenedorIntermedios.setBackground(ContextCompat.getDrawable(this, R.drawable.debug_border));
+            filaCirculosLayout.addView(contenedorIntermedios);
+
+
+            // Crear círculo derecho estático
+            TextView circuloDer = crearCirculo();
+            filaCirculosLayout.addView(circuloDer);
+
+            // Añadir el contenedor intermedio a filasCirculos
+            filasCirculos.set(i, contenedorIntermedios);
         }
 
-        // Ahora, generar los botones al final, fuera del ciclo de filas
+        // Generación de botones fuera del ciclo de filas
         for (int i = 0; i < numFilas; i++) {
             final int index = i;
-            // Crear un LinearLayout para los botones "+" y "-"
             LinearLayout buttonRow = new LinearLayout(this);
             buttonRow.setOrientation(LinearLayout.HORIZONTAL);
             buttonRow.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
             buttonRow.setGravity(Gravity.CENTER);
 
-            // Crear el botón "+"
             Button botonMas = new Button(this);
             botonMas.setText("+");
             botonMas.setOnClickListener(v -> agregarCirculo(index));
 
-            // Crear el botón "-"
             Button botonMenos = new Button(this);
             botonMenos.setText("-");
             botonMenos.setOnClickListener(v -> eliminarCirculo(index));
 
-            // Añadir los botones al LinearLayout
             buttonRow.addView(botonMas);
             buttonRow.addView(botonMenos);
-
-            // Añadir la fila de botones al final
             buttonLayout.addView(buttonRow);
         }
     }
+
+    private TextView crearCirculo() {
+        TextView circle = new TextView(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(80, 80);
+        params.setMargins(8, 8, 8, 8);
+        circle.setLayoutParams(params);
+        circle.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
+        return circle;
+    }
+
 
     private void agregarCirculo(int fila) {
         int numCirculos = numCirculosPorFila.get(fila);
@@ -200,74 +203,18 @@ public class CalculoColumnas extends AppCompatActivity {
 
 
     private void actualizarCirculos(int fila) {
-        LinearLayout filaLayout = filasCirculos.get(fila);
-        filaLayout.removeAllViews();  // Limpiar la fila de círculos
+        LinearLayout contenedorIntermedios = filasCirculos.get(fila);
+        contenedorIntermedios.removeAllViews();
 
-        // Número actual de círculos
         int numCirculos = numCirculosPorFila.get(fila);
+        int numEspacios = numCirculos - 2;
 
-        // Crear el LinearLayout con orientación horizontal para contener los círculos
-        LinearLayout contenedorCirculos = new LinearLayout(this);
-        contenedorCirculos.setOrientation(LinearLayout.HORIZONTAL);
-        contenedorCirculos.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        filaLayout.addView(contenedorCirculos);
-
-        // Tamaño fijo de los círculos
-        int tamanoCirculo = 80;  // Tamaño fijo para los círculos
-        int margen = 16;         // Márgenes entre los círculos
-
-        // Crear el primer círculo visible (extremo izquierdo)
-        TextView circuloIzq = new TextView(this);
-        LinearLayout.LayoutParams paramsIzq = new LinearLayout.LayoutParams(tamanoCirculo, tamanoCirculo);
-        paramsIzq.setMargins(margen, 8, margen, 8);  // Márgenes para el círculo izquierdo
-        circuloIzq.setLayoutParams(paramsIzq);
-        circuloIzq.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
-        circuloIzq.setVisibility(View.VISIBLE);
-        contenedorCirculos.addView(circuloIzq);
-
-        // Crear los círculos intermedios si es necesario
-        if (numCirculos > 2) {
-            // Crear un LinearLayout para los círculos intermedios
-            LinearLayout contenedorIntermedios = new LinearLayout(this);
-            contenedorIntermedios.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams paramsIntermediosContainer = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            contenedorIntermedios.setLayoutParams(paramsIntermediosContainer);
-            contenedorCirculos.addView(contenedorIntermedios);
-
-            // Calcular el número de espacios a distribuir entre los círculos intermedios
-            int numEspacios = numCirculos - 2; // Espacios entre círculos intermedios
-
-            // Espacio adicional que se distribuirá entre los círculos intermedios
-            int espacioEntreCirculos = (int) ((float) (contenedorCirculos.getWidth() - 2 * tamanoCirculo - 2 * margen) / numEspacios);
-
-            // Si el espacio calculado es menor que el margen mínimo, ajustamos el valor
-            if (espacioEntreCirculos < margen) {
-                espacioEntreCirculos = margen;
-            }
-
-            // Crear los círculos intermedios
-            for (int j = 0; j < numEspacios; j++) {
-                TextView circuloIntermedio = new TextView(this);
-                LinearLayout.LayoutParams paramsIntermedio = new LinearLayout.LayoutParams(tamanoCirculo, tamanoCirculo);
-                paramsIntermedio.setMargins(espacioEntreCirculos, 8, espacioEntreCirculos, 8);  // Márgenes dinámicos
-                circuloIntermedio.setLayoutParams(paramsIntermedio);
-                circuloIntermedio.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
-                circuloIntermedio.setVisibility(View.VISIBLE);
-                contenedorIntermedios.addView(circuloIntermedio);
-            }
+        for (int j = 0; j < numEspacios; j++) {
+            TextView circuloIntermedio = crearCirculo();
+            contenedorIntermedios.addView(circuloIntermedio);
         }
-
-        // Crear el último círculo visible (extremo derecho)
-        TextView circuloDer = new TextView(this);
-        LinearLayout.LayoutParams paramsDer = new LinearLayout.LayoutParams(tamanoCirculo, tamanoCirculo);
-        paramsDer.setMargins(margen, 8, margen, 8);  // Márgenes para el círculo derecho
-        circuloDer.setLayoutParams(paramsDer);
-        circuloDer.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_shape));
-        circuloDer.setVisibility(View.VISIBLE);
-        contenedorCirculos.addView(circuloDer);
     }
+
 
 
 }
