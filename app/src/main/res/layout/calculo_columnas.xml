@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:inputType="numberDecimal"
-                android:hint="Módulo de elasticidad" />
+                android:hint="Módulo de elasticidad(kg/cm^2)" />
 
         </LinearLayout>
 
@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:inputType="numberDecimal"
-                android:hint="Resistencia a compresión" />
+                android:hint="Resistencia a compresión (kg/cm^2)" />
 
         </LinearLayout>
 
@@ -109,7 +109,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:inputType="numberDecimal"
-                android:hint="Esfuerzo de fluencia" />
+                android:hint="Esfuerzo de fluencia(kg/cm^2)" />
 
         </LinearLayout>
 
@@ -133,7 +133,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:inputType="numberDecimal"
-                android:hint="Base" />
+                android:hint="Base(cm)" />
 
         </LinearLayout>
 
@@ -157,7 +157,30 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:inputType="numberDecimal"
-                android:hint="Altura" />
+                android:hint="Altura(cm)" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="r:  "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/input_r"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="numberDecimal"
+                android:hint="Recubrimiento(cm)" />
 
         </LinearLayout>
         <Button

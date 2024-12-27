@@ -1,25 +1,24 @@
 package com.jean704.calculadoracivilbyjean704;
 
-import static android.content.ContentValues.TAG;
-
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 public class CalculoCaladoSeccionCircular extends AppCompatActivity {
 
     private EditText inputQd, inputDd, inputN, inputS;
     private TextView outputResult;
 
-    double thetha,areaCalc,perimetroCalc,radioHidraulicoCalc,velocidad,qCalc,qd,dd,n,s,y,radio;
+    double thetha, areaCalc, perimetroCalc, radioHidraulicoCalc, velocidad, qCalc, qd, dd, n, s, y, radio;
+    double T, Fr, D;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,15 +49,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             }
         });
     }
-    public void repetirCalculo(double yCalculo){
-        y = yCalculo;
-        thetha= 2*Math.acos(1-(y/radio));
-        areaCalc=0.5*(radio*radio)*(thetha-Math.sin(thetha));
-        perimetroCalc=radio*thetha;
-        radioHidraulicoCalc=Math.pow((areaCalc/perimetroCalc),((double) 2 /3));
-        velocidad= (1/n)*radioHidraulicoCalc*Math.pow(s,0.5);
-        qCalc= velocidad*areaCalc*1000;
-    }
+
     public void mostrarResultados(double[] resultados, String[] descripciones, String[] unidades) {
         // Asegura que todos los arreglos tengan el mismo tamaño
         if (resultados.length != descripciones.length || descripciones.length != unidades.length) {
@@ -104,7 +95,18 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         outputResult.setText(spannable);
     }
 
-
+    public void repetirCalculo(double yCalculo) {
+        y = yCalculo;
+        thetha = 2 * Math.acos(1 - (y / radio));
+        areaCalc = 0.5 * (radio * radio) * (thetha - Math.sin(thetha));
+        perimetroCalc = radio * thetha;
+        radioHidraulicoCalc = Math.pow((areaCalc / perimetroCalc), ((double) 2 / 3));
+        velocidad = (1 / n) * radioHidraulicoCalc * Math.pow(s, 0.5);
+        T = Math.sin(thetha / 2) * dd / 100;
+        D = areaCalc / T;
+        Fr = velocidad / Math.pow(9.81 * D, 0.5);
+        qCalc = velocidad * areaCalc * 1000;
+    }
 
     public void calculateResult() {
         try {
@@ -114,22 +116,56 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             n = Double.parseDouble(inputN.getText().toString());
             s = Double.parseDouble(inputS.getText().toString());
 
-            radio= (dd/2)/100;
-            y=0.0001;
-            double iterac=0;
-            qCalc=0;
-            while (qCalc<qd && iterac < Math.pow(10,10)) {
-                y += 0.00001; // Incrementa y
-                repetirCalculo(y); // Calcula qCalc
-                iterac++;
+            radio = (dd / 2) / 100; // Radio en metros
+
+            y = 0.0001;
+            qCalc = 0;
+            double incremento = 0.001;
+            double tolerancia = 1e-6;
+            double iteracionesMax = 1e6;
+            double iteraciones = 0;
+
+            while (Math.abs(qCalc - qd) > tolerancia && iteraciones < iteracionesMax) {
+                repetirCalculo(y); // Calcula el caudal qCalc para el valor actual de y
+
+                if (qCalc < qd) {
+                    y += incremento; // Incrementa y si qCalc es menor que qd
+                } else {
+                    incremento /= 2; // Reduce el incremento para mayor precisión
+                    y -= incremento; // Retrocede si excedemos el caudal objetivo
+                }
+                y = Math.min(y, dd);
+                iteraciones++;
             }
-            double[] resultados = { y, areaCalc, perimetroCalc, velocidad, qCalc };
-            String[] descripciones = {"Calado", "Área", "Perímetro","Velocidad","Caudal"};
-            String[] unidades = {"(m)", "(m^2)", "(m)","(m/s)","(m^3/s)"};
-            mostrarResultados(resultados,descripciones,unidades);
+
+            if (iteraciones >= iteracionesMax) {
+                throw new ArithmeticException("No se encontró solución dentro del máximo de iteraciones.");
+            }
+            y = y * 100;// (cm)
+            areaCalc = areaCalc * 100 * 100;
+            perimetroCalc = perimetroCalc * 100;
+            String tipodeFlujo = "";
+
+            if (Fr > 1) {
+                tipodeFlujo = "Flujo supercrítico";
+            }
+            if (Fr == 1) {
+                tipodeFlujo = "Flujo en transición";
+            }
+            if (Fr < 1) {
+                tipodeFlujo = "Flujo subcrítico";
+            }
+
+            double[] resultados = {y, areaCalc, perimetroCalc, velocidad, qCalc, T, Fr};
+            String[] descripciones = {"Calado", "Área", "Perímetro", "Velocidad", "Caudal", "Espejo de agua", "Froude"};
+            String[] unidades = {"(cm)", "(cm^2)", "(cm)", "(m/s)", "(l/s)", "(m)", "  "+tipodeFlujo};
+            mostrarResultados(resultados, descripciones, unidades);
+
         } catch (NumberFormatException e) {
-            // Mostrar un mensaje si algún campo no está lleno o contiene valores no numéricos
             Toast.makeText(this, "Por favor, ingresa todos los valores correctamente.", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
 }

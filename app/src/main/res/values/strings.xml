@@ -6,4 +6,16 @@
         <item>5</item>
         <item>6</item>
     </string-array>
+    <string-array name="As_string">
+        <item>φ 8</item>
+        <item>φ 10</item>
+        <item>φ 12</item>
+        <item>φ 15</item>
+        <item>φ 18</item>
+        <item>φ 22</item>
+        <item>φ 25</item>
+        <item>φ 28</item>
+        <item>φ 32</item>
+        <item>φ 40</item>
+    </string-array>
 </resources>

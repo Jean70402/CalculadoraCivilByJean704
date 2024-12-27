@@ -6,6 +6,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -20,18 +21,16 @@ import java.util.ArrayList;
 
 public class CalculoColumnas extends AppCompatActivity {
 
-    private EditText inputEs, inputFc, inputFy, inputB, inputH;
+    private EditText inputEs, inputFc, inputFy, inputB, inputH,inputR;
     private Button buttonCalculate, buttonBackToMain;
     private TextView resultTextView;
-
-    private Spinner spinnerFilasAcero;
     private LinearLayout varillaGrid;
     private LinearLayout buttonLayout;
     private ArrayList<LinearLayout> filasCirculos;
     private ArrayList<Integer> numCirculosPorFila; // Lista para almacenar el número de círculos por fila
 
     int maxCircles = 9; // Número máximo de círculos en una fila
-    int tamanoCircles=80;
+    int tamanoCircles = (Math.min(80, maxCircles*10));
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,23 +42,15 @@ public class CalculoColumnas extends AppCompatActivity {
         inputFy = findViewById(R.id.input_fy);
         inputB = findViewById(R.id.input_b);
         inputH = findViewById(R.id.input_h);
+        inputR = findViewById(R.id.input_r);
         buttonCalculate = findViewById(R.id.button_calculate);
         buttonBackToMain = findViewById(R.id.button_back_to_main);
 
         // Configurar el botón de cálculo
-        buttonCalculate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                calculateProduct();
-            }
-        });
+        buttonCalculate.setOnClickListener(v -> calculateProduct());
 
-        // Configurar el botón para regresar al menú principal
-        buttonBackToMain.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish(); // Cierra la actividad actual para regresar a la anterior (menú principal)
-            }
+        buttonBackToMain.setOnClickListener(v -> {
+            finish(); // Cierra la actividad actual para regresar a la anterior (menú principal)
         });
 
         varillaGrid = findViewById(R.id.varillaGrid);
@@ -85,26 +76,6 @@ public class CalculoColumnas extends AppCompatActivity {
         generarFilasConBotones(Integer.parseInt(spinnerFilasAcero.getSelectedItem().toString()));
     }
 
-    private void calculateProduct() {
-        try {
-            // Leer valores de los campos de entrada y convertirlos a double
-            double es = Double.parseDouble(inputEs.getText().toString());
-            double fc = Double.parseDouble(inputFc.getText().toString());
-            double fy = Double.parseDouble(inputFy.getText().toString());
-            double b = Double.parseDouble(inputB.getText().toString());
-            double h = Double.parseDouble(inputH.getText().toString());
-
-            // Calcular el producto de todos los valores
-            double result = es * fc * fy * b * h;
-
-            // Mostrar el resultado
-            resultTextView.setText("Resultado: " + result);
-
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "Por favor ingrese todos los valores correctamente", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     private void generarFilasConBotones(int numFilas) {
         varillaGrid.removeAllViews();
         filasCirculos.clear();
@@ -125,15 +96,10 @@ public class CalculoColumnas extends AppCompatActivity {
             TextView circuloIzq = crearCirculo();
             filaCirculosLayout.addView(circuloIzq);
 
-
-
             // Contenedor central para círculos intermedios
             LinearLayout contenedorIntermedios = new LinearLayout(this);
             contenedorIntermedios.setOrientation(LinearLayout.HORIZONTAL);
             contenedorIntermedios.setGravity(Gravity.START);
-            //añadir borde de depuración
-            //contenedorIntermedios.setBackground(ContextCompat.getDrawable(this, R.drawable.debug_border));
-
             LinearLayout.LayoutParams paramsIntermediosContainer = new LinearLayout.LayoutParams(
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
             contenedorIntermedios.setLayoutParams(paramsIntermediosContainer);
@@ -146,10 +112,6 @@ public class CalculoColumnas extends AppCompatActivity {
                 public void onGlobalLayout() {
                     contenedorIntermedios.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     int anchoContenedor = contenedorIntermedios.getWidth();
-
-                    Log.d("CalculoColumnas", "Ancho del contenedor intermedios en fila " + finalI + ": " + anchoContenedor);
-
-                    // Actualizar círculos usando el ancho del contenedor
                     agregarCirculosDesdeCentro(finalI, anchoContenedor);
                 }
             });
@@ -179,11 +141,26 @@ public class CalculoColumnas extends AppCompatActivity {
             botonMenos.setText("-");
             botonMenos.setOnClickListener(v -> eliminarCirculo(index));
 
+            // Crear un TextView con la palabra "As:"
+            TextView textoAs = new TextView(this);
+            textoAs.setText("phi:");
+            textoAs.setPadding(0, 0, 10, 0);  // Opcional, para añadir algo de espacio entre el texto y el spinner
+
+            // Crear el Spinner con valores de As_string
+            Spinner spinnerAs = new Spinner(this);
+            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                    R.array.As_string, android.R.layout.simple_spinner_item);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerAs.setAdapter(adapter);
+            // Añadir los botones y el spinner a la fila
             buttonRow.addView(botonMas);
             buttonRow.addView(botonMenos);
+            buttonRow.addView(textoAs);
+            buttonRow.addView(spinnerAs);
             buttonLayout.addView(buttonRow);
         }
     }
+
 
     private TextView crearCirculo() {
         TextView circle = new TextView(this);
@@ -260,6 +237,46 @@ public class CalculoColumnas extends AppCompatActivity {
             int anchoContenedor = contenedorIntermedios.getWidth();
             agregarCirculosDesdeCentro(fila, anchoContenedor);
         }
+    }
+
+    private void calculateProduct() {
+        try {
+            // Leer valores de los campos de entrada y convertirlos a double
+            double es = Double.parseDouble(inputEs.getText().toString());
+            double fc = Double.parseDouble(inputFc.getText().toString());
+            double fy = Double.parseDouble(inputFy.getText().toString());
+            double b = Double.parseDouble(inputB.getText().toString());
+            double h = Double.parseDouble(inputH.getText().toString());
+            double r = Double.parseDouble(inputR.getText().toString());
+            // Calcular el producto de todos los valores
+            double result = es * fc * fy * b * h;
+
+            // Mostrar el resultado
+           // resultTextView.setText("Resultado: " + result);
+            ObtenerAs();
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Por favor ingrese todos los valores correctamente", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void ObtenerAs() {
+
+        // Obtener el valor seleccionado en el Spinner
+        Spinner spinnerFilasAcero = findViewById(R.id.spinner_filas_acero);
+
+        String valorSeleccionado = spinnerFilasAcero.getSelectedItem().toString();
+
+        // Obtener el número de filas
+        int numFilas = Integer.parseInt((valorSeleccionado));
+        for (int i = 0; i < numFilas; i++) {
+            LinearLayout buttonRow = (LinearLayout) buttonLayout.getChildAt(i); // Obtener la fila
+            Spinner spinnerAs = (Spinner) buttonRow.getChildAt(1); // El Spinner está en la segunda posición (índice 1)
+            Log.d("ObtenerAs", "Fila " + i + ": Valor seleccionado en Spinner As: " + valorSeleccionado);
+        }
+        // Puedes hacer algo con los valores obtenidos, por ejemplo:
+        Log.d("ObtenerAs", "Valor seleccionado: " + valorSeleccionado);
+        Log.d("ObtenerAs", "Número de filas: " + numFilas);
+
+        // Aquí podrías realizar más operaciones según tus necesidades
     }
 
 }
