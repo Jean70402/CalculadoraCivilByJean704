@@ -44,7 +44,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="n (Número de Manning)"
+        android:text="n (Manning) / ε (Rugosidad absoluta Darcy)(mm)"
         android:textSize="16sp" />
 
     <EditText
@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
-        android:hint="Ingrese número de Manning" />
+        android:hint="Ingrese Manning/Darcy" />
 
     <!-- Campo para S (Pendiente) -->
     <TextView
