@@ -157,48 +157,16 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         }
     }
     double factorFriccion = 0.001;
-
-    public void calcularFactorDeFriccion() {
+    public void calculateDarcy() {
         qd = Double.parseDouble(inputQd.getText().toString());
         dd = Double.parseDouble(inputDd.getText().toString());
         n = Double.parseDouble(inputN.getText().toString());
         s = Double.parseDouble(inputS.getText().toString());
 
         dd = dd / 100; // Diámetro en metros
-        double U = 1.004e-6; // Viscosidad cinemática en m^2/s
-        double Dh = dd;      // Diámetro hidráulico
-        double tolerancia = 1e-10;
-        double iteracionesMax = 100;
-        double iteraciones = 0;
-
-        while (iteraciones < iteracionesMax) {
-            double velocidad = Math.sqrt(s * dd * 2 * 9.81 / factorFriccion);
-            double Reynolds = velocidad * Dh / U;
-            double ladoIzquierdo = 1 / Math.sqrt(factorFriccion);
-            double ladoDerecho = -2 * Math.log10((n / 1000 / (3.7 * Dh)) + 2.51 / (Reynolds * Math.sqrt(factorFriccion)));
-            double diferencia = ladoIzquierdo - ladoDerecho;
-            if (Math.abs(diferencia) < tolerancia) {
-                break;
-            }
-            // Derivada del lado izquierdo con respecto al factor de fricción
-            double g = (n / 1000 / (3.7 * Dh)) + (2.51 / (Reynolds * Math.sqrt(factorFriccion)));
-            double derivada = -0.5 / Math.pow(factorFriccion, 1.5)
-                    - (2 / (Math.log(10) * g)) * (-2.51 / (2 * Reynolds * Math.pow(factorFriccion, 1.5)));
-            factorFriccion = factorFriccion - (diferencia / derivada);
-            iteraciones++;
-        }
-        Log.d("Darcy", "El factor encontrado es: " + factorFriccion+"en "+ iteraciones+" iteraciones");
-    }
-    public void calculateDarcy(){
-        calcularFactorDeFriccion();
-        qd = Double.parseDouble(inputQd.getText().toString());
-        dd = Double.parseDouble(inputDd.getText().toString());
-        n = Double.parseDouble(inputN.getText().toString());
-        s = Double.parseDouble(inputS.getText().toString());
-        Log.d("Darcy", "La velocidad es: "+velocidad);
-        radio = (dd / 2) / 100; // Radio en metros
-        y = 0.0001;
-        qCalc=0;
+        radio = (dd / 2); // Radio en metros
+        y = 0.001;
+        qCalc = 0;
         double incremento = 0.001;
         double tolerancia = 1e-6;
         double iteracionesMax = 1e6;
@@ -216,20 +184,109 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             y = Math.min(y, dd);
             iteraciones++;
         }
+
         showResult();
     }
-    public void repetirCalculoYDarcy(double yParametro){
-        y = yParametro;
-        thetha = 2 * Math.acos(1 - (y / radio));
-        areaCalc = 0.5 * (radio * radio) * (thetha - Math.sin(thetha));
-        perimetroCalc = radio * thetha;
-        radioHidraulicoCalc = Math.pow((areaCalc / perimetroCalc), ((double) 2 / 3));
-        //velocidad = (1 / n) * radioHidraulicoCalc * Math.pow(s, 0.5);
-        T = Math.sin(thetha / 2) * dd / 100;
-        D = areaCalc / T;
-        Fr = velocidad / Math.pow(9.81 * D, 0.5);
-        qCalc = velocidad * areaCalc * 1000;
+
+    public void calcularFactorDeFriccion(double Dh) {
+        double U = 1.004e-6; // Viscosidad cinemática en m^2/s
+        double f = 0.02; // Factor de fricción inicial
+        double tolerancia = 1e-10;
+        double iteracionesMax = 100;
+        double iteraciones = 0;
+
+        while (iteraciones < iteracionesMax) {
+            // Velocidad basada en el factor de fricción actual
+            double velocidad = Math.sqrt(s * Dh * 2 * 9.81 / f);
+
+            // Número de Reynolds
+            double Reynolds = velocidad * Dh / U;
+
+            // Validar que Reynolds sea positivo
+            if (Reynolds <= 0) {
+                Log.e("Darcy", "Reynolds inválido: " + Reynolds);
+                factorFriccion = Double.NaN;
+                return;
+            }
+
+            // Ecuación de Colebrook-White
+            double ladoIzquierdo = 1 / Math.sqrt(f);
+            double ladoDerecho = -2 * Math.log10((n / 1000 / (3.7 * Dh)) + 2.51 / (Reynolds * Math.sqrt(f)));
+
+            // Diferencia entre ambos lados
+            double diferencia = ladoIzquierdo - ladoDerecho;
+
+            // Validar convergencia
+            if (Math.abs(diferencia) < tolerancia) {
+                factorFriccion = f;
+                Log.d("Darcy", "El factor hallado es: " + f + " en " + iteraciones + " iteraciones");
+                return;
+            }
+
+            // Derivada del lado derecho con respecto a f
+            double g = (n / 1000 / (3.7 * Dh)) + (2.51 / (Reynolds * Math.sqrt(f)));
+            double derivada = -0.5 / Math.pow(f, 1.5)
+                    - (2 / (Math.log(10) * g)) * (-2.51 / (2 * Reynolds * Math.pow(f, 1.5)));
+
+            // Validar derivada para evitar divisiones por cero
+            if (derivada == 0) {
+                Log.e("Darcy", "Derivada inválida (división por cero)");
+                factorFriccion = Double.NaN;
+                return;
+            }
+
+            // Actualizar f usando Newton-Raphson
+            f = f - (diferencia / derivada);
+
+            // Validar que f sea positivo
+            if (f <= 0) {
+                Log.e("Darcy", "Factor de fricción inválido: " + f);
+                factorFriccion = Double.NaN;
+                return;
+            }
+
+            iteraciones++;
+        }
+
+        // Si se alcanzó el límite de iteraciones sin converger
+        Log.w("Darcy", "El cálculo de f no convergió después de " + iteracionesMax + " iteraciones");
+        factorFriccion = Double.NaN;
     }
+
+    public void repetirCalculoYDarcy(double yParametro) {
+        y = yParametro;
+
+        // Calcular geometría
+        thetha = 2 * Math.acos(1 - (y / radio));
+        areaCalc = 0.5 * (radio * radio) * (thetha - Math.sin(thetha)); // Área mojada
+        perimetroCalc = radio * thetha; // Perímetro mojado
+        double Dh = 4 * (areaCalc / perimetroCalc); // Diámetro hidráulico
+
+        // Validar que el diámetro hidráulico sea positivo
+        if (Dh <= 0) {
+            Log.e("Darcy", "Diámetro hidráulico inválido: " + Dh);
+            return;
+        }
+
+        // Recalcular factor de fricción con el nuevo diámetro hidráulico
+        calcularFactorDeFriccion(Dh);
+
+        // Validar que el factor de fricción sea válido
+        if (Double.isNaN(factorFriccion)) {
+            Log.e("Darcy", "Factor de fricción inválido durante el cálculo con y = " + y);
+            return;
+        }
+
+        // Calcular velocidad y caudal
+        velocidad = Math.sqrt(s * Dh * 2 * 9.81 / factorFriccion); // Velocidad con el nuevo factor de fricción
+        T = Math.sin(thetha / 2) * dd; // Tirante hidráulico
+        D = areaCalc / T;
+        Fr = velocidad / Math.sqrt(9.81 * D);
+        qCalc = velocidad * areaCalc * 1000; // Caudal en L/s
+
+        Log.d("Darcy", "Calado (y): " + y + ", Factor de fricción: " + factorFriccion + ", Velocidad: " + velocidad + ", Caudal: " + qCalc);
+    }
+
 
     public void showResult(){
         y = y * 100;// (cm)
@@ -252,31 +309,4 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         String[] unidades = {"(cm)", "(cm^2)", "(cm)", "(m/s)", "(l/s)", "(m)", "  "+tipodeFlujo};
         mostrarResultados(resultados, descripciones, unidades);
     }
-    /*
-        while  (Math.abs((ladoIzquierdo-ladoDerecho)/ladoDerecho)> tolerancia && iteraciones<iteracionesMax) {
-            thetha = 2 * Math.acos(1 - (y / radio));
-            areaCalc = 0.5 * (radio * radio) * (thetha - Math.sin(thetha));
-            perimetroCalc = radio * thetha;
-            radioHidraulicoCalc = (areaCalc / perimetroCalc);
-            Dh=4*radioHidraulicoCalc;
-            velocidad = Math.sqrt(s*dd*2*9.81/factorFriccion);
-            Reynolds=velocidad*Dh/U;
-            T = Math.sin(thetha / 2) * dd / 100;
-            D = areaCalc / T;
-            Fr = velocidad / Math.sqrt(9.81 * D);
-            qCalc = velocidad * areaCalc * 1000;
-            ladoIzquierdo= 1/(Math.sqrt(factorFriccion));
-            ladoDerecho=-2*Math.log10((n/1000/(3.7*Dh))+2.51/(Reynolds*(Math.sqrt(factorFriccion))));
-            if (qCalc < qd) {
-                y += incremento; // Incrementa y si qCalc es menor que qd
-            } else {
-                incremento /= 2; // Reduce el incremento para mayor precisión
-                y -= incremento; // Retrocede si excedemos el caudal objetivo
-            }
-            y = Math.min(y, dd);
-            iteraciones++;
-        }
-        showResult();
-        Log.d("Darcy","El factor hallado es: "+factorFriccion);
-        */
 }
