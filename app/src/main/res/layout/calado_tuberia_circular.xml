@@ -9,14 +9,14 @@
         android:id="@+id/button_back_to_main"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="0dp"
         android:text="Atrás" />
 
     <!-- Campo para Qd (Caudal de diseño) -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Qd (Caudal de diseño)"
+        android:text="Qd (Caudal de diseño) (l/s)"
         android:textSize="16sp" />
 
     <EditText
@@ -30,7 +30,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Dd (Diámetro de diseño)"
+        android:text="Dd (Diámetro de diseño)(cm)"
         android:textSize="16sp" />
 
     <EditText
@@ -58,7 +58,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="S (Pendiente)"
+        android:text="S (Pendiente)(m/m)"
         android:textSize="16sp" />
 
     <EditText
@@ -66,25 +66,75 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
-        android:hint="% ej= 0.01" />
+        android:hint="ej= 0.01" />
 
     <!-- Botón de cálculo -->
-    <Button
-        android:id="@+id/calculateButton"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Calcular Manning"
-        android:layout_gravity="center_horizontal"
-        android:padding="8dp"
-        android:layout_marginTop="16dp" />
-    <Button
-        android:id="@+id/calculateButtonDarcy"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Calcular Darcy"
-        android:layout_gravity="center_horizontal"
-        android:padding="8dp"
-        android:layout_marginTop="16dp" />
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:padding="16dp">
+
+        <!-- Botones en línea horizontal -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/calculateButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Calcular Manning"
+                android:padding="8dp"
+                android:layout_marginEnd="16dp" />
+
+            <Button
+                android:id="@+id/calculateButtonDarcy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Calcular Darcy"
+                android:padding="8dp" />
+        </LinearLayout>
+
+        <!-- Espacio entre los grupos de botones -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="4dp" />
+
+        <!-- Botones en línea horizontal -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/clearButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Limpiar"
+                android:padding="8dp"
+                android:layout_marginEnd="0dp" />
+
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Guardar Datos"
+                android:padding="8dp" />
+            <Button
+                android:id="@+id/showButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mostrar Datos"
+                android:padding="8dp" />
+        </LinearLayout>
+    </LinearLayout>
+
 
     <!-- Campo de salida de resultados -->
     <TextView
