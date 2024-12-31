@@ -117,21 +117,28 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Limpiar"
-                android:padding="8dp"
+                android:padding="6dp"
                 android:layout_marginEnd="0dp" />
 
             <Button
                 android:id="@+id/saveButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Guardar Datos"
-                android:padding="8dp" />
+                android:text="Guardar calc."
+                android:padding="6dp" />
             <Button
                 android:id="@+id/showButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mostrar Datos"
-                android:padding="8dp" />
+                android:text="Export."
+                android:padding="4dp" />
+
+            <Button
+                android:id="@+id/sendWhatsAppButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="0dp"
+                android:text="Whatsapp" />
         </LinearLayout>
     </LinearLayout>
 

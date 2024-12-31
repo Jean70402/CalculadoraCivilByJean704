@@ -1,5 +1,9 @@
 package com.jean704.calculadoracivilbyjean704;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -11,9 +15,25 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class CalculoCaladoSeccionCircular extends AppCompatActivity {
 
@@ -25,8 +45,9 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
     double factorFriccion = 0.001;
     private ArrayList<double[]> tuberiasGuardadas = new ArrayList<>();
     private int contadorTuberias = 0; // Contador para asignar identificadores únicos
-
-
+    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    String sheetName = "Resultados_" + timeStamp;
+    private ActivityResultLauncher<Intent> saveFileLauncher;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +65,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         Button limpiarButton=findViewById(R.id.clearButton);
         Button guardarButton=findViewById(R.id.saveButton);
         Button mostrarButton=findViewById(R.id.showButton);
+        Button whatsappButton=findViewById(R.id.sendWhatsAppButton);
         buttonBackToMain.setOnClickListener(v -> {
             finish();
         });
@@ -52,7 +74,15 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         calculateButtonDarcy.setOnClickListener(v -> calculateDarcy());
         limpiarButton.setOnClickListener(v -> limpiarAccion());
         guardarButton.setOnClickListener(v -> guardarAccion());
-        mostrarButton.setOnClickListener(v -> mostrarGuardados());
+        mostrarButton.setOnClickListener(v -> exportarDatosAExcel());
+        whatsappButton.setOnClickListener(v -> compartirArchivoWhatsApp());
+        saveFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                Uri uri = result.getData().getData();
+                saveFileToUri(uri);
+            }
+        });
+
     }
     public void guardarAccion() {
         try {
@@ -72,16 +102,83 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             Toast.makeText(this, "Error al guardar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
-    public void mostrarGuardados() {
-        StringBuilder savedData = new StringBuilder("Resultados Guardados:\n");
-        for (int i = 0; i < tuberiasGuardadas.size(); i++) {
-            savedData.append("Tubería #").append(i + 1).append(": ");
-            for (double valor : tuberiasGuardadas.get(i)) {
-                savedData.append(String.format("%.4f", valor)).append(" ");
-            }
-            savedData.append("\n");
+    public void exportarDatosAExcel() {
+        if (tuberiasGuardadas.isEmpty()) {
+            Toast.makeText(this, "No hay datos guardados para exportar.", Toast.LENGTH_SHORT).show();
+            return;
         }
-        Toast.makeText(this, savedData.toString(), Toast.LENGTH_LONG).show();
+
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        intent.putExtra(Intent.EXTRA_TITLE, "ResultadosTuberias_" + System.currentTimeMillis() + ".xlsx");
+        saveFileLauncher.launch(intent);
+    }
+
+
+    private void saveFileToUri(Uri uri) {
+        try {
+            // Crea un nuevo workbook para garantizar que no se reutilicen datos antiguos
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            XSSFSheet sheet = workbook.createSheet(sheetName);
+
+            // Encabezados
+            String[] headers = {"Tubería", "Calado", "Área", "Perímetro", "Velocidad", "Caudal", "Espejo de Agua", "Froude", "Porcentaje de llenado", "Factor de Fricción"};
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Escribe los datos actualizados en la hoja de cálculo
+            for (int i = 0; i < tuberiasGuardadas.size(); i++) {
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue("Tubería #" + (i + 1));
+                for (int j = 0; j < tuberiasGuardadas.get(i).length; j++) {
+                    row.createCell(j + 1).setCellValue(tuberiasGuardadas.get(i)[j]);
+                }
+            }
+
+            // Guarda el archivo
+            try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
+                workbook.write(outputStream);
+                workbook.close();
+                Toast.makeText(this, "Archivo Excel guardado correctamente.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error al guardar el archivo Excel.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void compartirArchivoWhatsApp() {
+        // Crea el archivo primero y guarda el URI
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        File file = new File(getExternalFilesDir(null), "ResultadosTuberias_" + timestamp + ".xlsx");
+        Uri fileUri = Uri.fromFile(file);
+
+        // Llamamos al método para guardar el archivo
+        saveFileToUri(fileUri);
+
+        // Verificar si el archivo se creó correctamente
+        if (!file.exists()) {
+            Toast.makeText(this, "Primero exporta el archivo.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Crear y configurar el Intent para compartir
+        Uri fileUriShare = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        intent.putExtra(Intent.EXTRA_STREAM, fileUriShare);
+        intent.setPackage("com.whatsapp");
+
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "WhatsApp no está instalado.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void limpiarAccion(){
