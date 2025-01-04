@@ -2,9 +2,11 @@ package com.jean704.calculadoracivilbyjean704;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -24,11 +26,17 @@ import androidx.core.content.FileProvider;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,6 +74,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         Button guardarButton=findViewById(R.id.saveButton);
         Button mostrarButton=findViewById(R.id.showButton);
         Button whatsappButton=findViewById(R.id.sendWhatsAppButton);
+        Button importButton=findViewById(R.id.importButton);
         buttonBackToMain.setOnClickListener(v -> {
             finish();
         });
@@ -76,6 +85,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         guardarButton.setOnClickListener(v -> guardarAccion());
         mostrarButton.setOnClickListener(v -> exportarDatosAExcel());
         whatsappButton.setOnClickListener(v -> compartirArchivoWhatsApp());
+        importButton.setOnClickListener(v -> seleccionarArchivoExcel());
         saveFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                 Uri uri = result.getData().getData();
@@ -178,6 +188,177 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             startActivity(intent);
         } catch (Exception e) {
             Toast.makeText(this, "WhatsApp no está instalado.", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private static final int REQUEST_CODE_EXCEL = 1;
+
+    public void seleccionarArchivoExcel() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            startActivityForResult(Intent.createChooser(intent, "Selecciona un archivo Excel"), REQUEST_CODE_EXCEL);
+        } catch (Exception e) {
+            Toast.makeText(this, "No se pudo abrir el selector de archivos.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_EXCEL && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+
+            try {
+                // Obtener la ruta del archivo desde la URI
+                String filePath = getFilePathFromUri(uri);
+                if (filePath != null) {
+                    procesarArchivoExcel(filePath);
+                } else {
+                    Toast.makeText(this, "No se pudo obtener la ruta del archivo.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Error al procesar el archivo.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private String getFilePathFromUri(Uri uri) {
+        String filePath = null;
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (columnIndex >= 0) {
+                    String displayName = cursor.getString(columnIndex);
+                    File file = new File(getExternalFilesDir(null), displayName);
+                    try (InputStream inputStream = getContentResolver().openInputStream(uri);
+                         FileOutputStream outputStream = new FileOutputStream(file)) {
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+                        filePath = file.getAbsolutePath();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                cursor.close();
+            }
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            filePath = uri.getPath();
+        }
+        return filePath;
+    }
+
+    public void procesarArchivoExcel(String filePath) {
+        try {
+            // Abrir el archivo Excel
+            FileInputStream file = new FileInputStream(new File(filePath));
+            Workbook workbook = new XSSFWorkbook(file);
+            Sheet sheet = workbook.getSheetAt(0); // Leer la primera hoja
+            ArrayList<double[]> resultados = new ArrayList<>();
+
+            // Iterar sobre las filas del Excel
+            for (Row row : sheet) {
+                // Leer los valores de las columnas A a D con formato correcto
+                double qd = Double.parseDouble(row.getCell(0).toString().replace(",", "."));
+                double dd = Double.parseDouble(row.getCell(1).toString().replace(",", "."));
+                double n = Double.parseDouble(row.getCell(2).toString().replace(",", "."));
+                double s = Double.parseDouble(row.getCell(3).toString().replace(",", "."));
+
+
+                // Asignar los valores a las entradas de calculateDarcy
+                inputQd.setText(String.valueOf(qd));
+                inputDd.setText(String.valueOf(dd));
+                inputN.setText(String.valueOf(n));
+                inputS.setText(String.valueOf(s));
+
+                // Ejecutar los métodos existentes
+                calculateDarcy();
+                guardarAccion();
+                //showResult(); // Generar resultados en el TextView de salida
+
+                // Obtener los resultados del TextView
+                double[] filaResultado = {
+                        y , areaCalc , perimetroCalc , velocidad, qCalc,
+                        T, Fr, porcentajeLlenado, factorFriccion
+                };
+                resultados.add(filaResultado);
+            }
+
+            // Exportar resultados a un archivo Excel
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            File archivoExcel = new File(getExternalFilesDir(null), "ResultadosTuberias_" + timestamp + ".xlsx");
+            guardarResultadosExcel(resultados, archivoExcel);
+
+            // Compartir el archivo Excel directamente
+            compartirArchivoExcel(archivoExcel);
+
+            // Cerrar el archivo Excel
+            workbook.close();
+            file.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private void guardarResultadosExcel(ArrayList<double[]> resultados, File archivoExcel) {
+        try {
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("Resultados");
+
+            // Crear encabezados en la primera fila
+            Row headerRow = sheet.createRow(0);
+            String[] encabezados = {"Calado (cm)", "Área (cm²)", "Perímetro (cm)", "Velocidad (m/s)", "Caudal (l/s)",
+                    "Espejo de agua (m)", "Froude", "Porcentaje de llenado (%)", "Factor de fricción"};
+            for (int i = 0; i < encabezados.length; i++) {
+                headerRow.createCell(i).setCellValue(encabezados[i]);
+            }
+
+            // Llenar los resultados
+            for (int i = 0; i < resultados.size(); i++) {
+                Row row = sheet.createRow(i + 1);
+                double[] filaResultado = resultados.get(i);
+                for (int j = 0; j < filaResultado.length; j++) {
+                    row.createCell(j).setCellValue(filaResultado[j]);
+                }
+            }
+
+            // Guardar el archivo Excel
+            FileOutputStream fileOut = new FileOutputStream(archivoExcel);
+            workbook.write(fileOut);
+            fileOut.close();
+            workbook.close();
+
+            Toast.makeText(this, "Archivo Excel guardado en: " + archivoExcel.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error al guardar el archivo Excel: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void compartirArchivoExcel(File archivoExcel) {
+        if (archivoExcel == null || !archivoExcel.exists()) {
+            Toast.makeText(this, "Primero exporta el archivo Excel.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            // Obtener el URI del archivo utilizando FileProvider
+            Uri fileUriShare = FileProvider.getUriForFile(this, getPackageName() + ".provider", archivoExcel);
+
+            // Crear el Intent para compartir
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            intent.putExtra(Intent.EXTRA_STREAM, fileUriShare);
+
+            // Iniciar la actividad para compartir
+            startActivity(Intent.createChooser(intent, "Compartir archivo Excel"));
+        } catch (Exception e) {
+            Toast.makeText(this, "Error al compartir el archivo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -356,7 +537,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             // Validar convergencia
             if (Math.abs(diferencia) < tolerancia) {
                 factorFriccion = f;
-                Log.d("Darcy", "El factor hallado es: " + f + " en " + iteraciones + " iteraciones");
+               // Log.d("Darcy", "El factor hallado es: " + f + " en " + iteraciones + " iteraciones");
                 return;
             }
 
@@ -421,7 +602,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         Fr = velocidad / Math.sqrt(9.81 * D);
         qCalc = velocidad * areaCalc * 1000; // Caudal en L/s
 
-        Log.d("Darcy", "Calado (y): " + y + ", Factor de fricción: " + factorFriccion + ", Velocidad: " + velocidad + ", Caudal: " + qCalc);
+        //Log.d("Darcy", "Calado (y): " + y + ", Factor de fricción: " + factorFriccion + ", Velocidad: " + velocidad + ", Caudal: " + qCalc);
     }
 
     double porcentajeLlenado;
