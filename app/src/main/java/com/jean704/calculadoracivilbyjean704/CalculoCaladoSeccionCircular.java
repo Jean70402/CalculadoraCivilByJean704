@@ -507,7 +507,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
     }
 
     public void calcularFactorDeFriccion(double Dh) {
-        double U = 1.004e-6; // Viscosidad cinemática en m^2/s
+        double U = 1.5e-6; // Viscosidad cinemática en m^2/s
         double f = 0.02; // Factor de fricción inicial
         double tolerancia = 1e-10;
         double iteracionesMax = 100;
