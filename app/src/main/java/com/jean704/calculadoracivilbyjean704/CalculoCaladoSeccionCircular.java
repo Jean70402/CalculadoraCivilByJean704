@@ -621,7 +621,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         Fr = velocidad / Math.sqrt(9.81 * D);
         qCalc = velocidad * areaCalc * 1000; // Caudal en L/s
 
-        //Log.d("Darcy", "Calado (y): " + y + ", Factor de fricción: " + factorFriccion + ", Velocidad: " + velocidad + ", Caudal: " + qCalc);
     }
 
 
