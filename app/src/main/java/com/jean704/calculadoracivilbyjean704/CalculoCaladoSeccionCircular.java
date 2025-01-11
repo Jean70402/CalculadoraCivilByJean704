@@ -1,17 +1,14 @@
 package com.jean704.calculadoracivilbyjean704;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,8 +17,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -34,7 +29,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -44,18 +38,25 @@ import java.util.Date;
 import java.util.Locale;
 
 public class CalculoCaladoSeccionCircular extends AppCompatActivity {
-
+    //Definición de variables globales, además de listas y demás elementos necesarios para la exportación de archivos
+    //Se utilizan valores de cración de archivos para importar listas grandes de valores en una sola corrida del programa.
+    //Los valores finales pueden ser exportados mediante un excel y enviados a WhatsApp.
     private EditText inputQd, inputDd, inputN, inputS;
     private TextView outputResult;
 
     double thetha, areaCalc, perimetroCalc, radioHidraulicoCalc, velocidad, qCalc, qd, dd, n, s, y, radio;
     double T, Fr, D;
+    double porcentajeLlenado;
     double factorFriccion = 0.001;
     private ArrayList<double[]> tuberiasGuardadas = new ArrayList<>();
     private int contadorTuberias = 0; // Contador para asignar identificadores únicos
     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
     String sheetName = "Resultados_" + timeStamp;
+    private static final int REQUEST_CODE_EXCEL = 1;
+
+    //Funciones de inicialización y lectura de datos.
     private ActivityResultLauncher<Intent> saveFileLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,11 +71,11 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         Button calculateButton = findViewById(R.id.calculateButton);
         Button buttonBackToMain = findViewById(R.id.button_back_to_main);
         Button calculateButtonDarcy = findViewById(R.id.calculateButtonDarcy);
-        Button limpiarButton=findViewById(R.id.clearButton);
-        Button guardarButton=findViewById(R.id.saveButton);
-        Button mostrarButton=findViewById(R.id.showButton);
-        Button whatsappButton=findViewById(R.id.sendWhatsAppButton);
-        Button importButton=findViewById(R.id.importButton);
+        Button limpiarButton = findViewById(R.id.clearButton);
+        Button guardarButton = findViewById(R.id.saveButton);
+        Button mostrarButton = findViewById(R.id.showButton);
+        Button whatsappButton = findViewById(R.id.sendWhatsAppButton);
+        Button importButton = findViewById(R.id.importButton);
         buttonBackToMain.setOnClickListener(v -> {
             finish();
         });
@@ -94,6 +95,8 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         });
 
     }
+
+    //Funcion de guardado de acciones en caso de querer calcular de uno en uno las tuberías.
     public void guardarAccion() {
         try {
             if (Double.isNaN(qCalc)) {
@@ -112,6 +115,8 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             Toast.makeText(this, "Error al guardar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
+    //Función de exportacion de datos a excel, se guarda en el dispositivo.
     public void exportarDatosAExcel() {
         if (tuberiasGuardadas.isEmpty()) {
             Toast.makeText(this, "No hay datos guardados para exportar.", Toast.LENGTH_SHORT).show();
@@ -125,7 +130,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         saveFileLauncher.launch(intent);
     }
 
-
+    //Funcion de creación de archivo de excel, con obtención de parámetros.
     private void saveFileToUri(Uri uri) {
         try {
             // Crea un nuevo workbook para garantizar que no se reutilicen datos antiguos
@@ -161,6 +166,8 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         }
     }
 
+    //Función de envio de archivo de whatsApp, se guarda como nombre de archivo usando año, mes, dia y hora
+    //para evitar duplicaciones de nombre.
     public void compartirArchivoWhatsApp() {
         // Crea el archivo primero y guarda el URI
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
@@ -190,7 +197,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             Toast.makeText(this, "WhatsApp no está instalado.", Toast.LENGTH_SHORT).show();
         }
     }
-    private static final int REQUEST_CODE_EXCEL = 1;
+
 
     public void seleccionarArchivoExcel() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -285,7 +292,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
 
                 // Obtener los resultados del TextView
                 double[] filaResultado = {
-                        y , areaCalc , perimetroCalc , velocidad, qCalc,
+                        y, areaCalc, perimetroCalc, velocidad, qCalc,
                         T, Fr, porcentajeLlenado, factorFriccion
                 };
                 resultados.add(filaResultado);
@@ -306,6 +313,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
     private void guardarResultadosExcel(ArrayList<double[]> resultados, File archivoExcel) {
         try {
             Workbook workbook = new XSSFWorkbook();
@@ -340,6 +348,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             Toast.makeText(this, "Error al guardar el archivo Excel: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
     private void compartirArchivoExcel(File archivoExcel) {
         if (archivoExcel == null || !archivoExcel.exists()) {
             Toast.makeText(this, "Primero exporta el archivo Excel.", Toast.LENGTH_SHORT).show();
@@ -362,12 +371,14 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         }
     }
 
-    public void limpiarAccion(){
+    public void limpiarAccion() {
         inputQd.setText("");
         inputDd.setText("");
         //inputN.setText("");
         inputS.setText("");
     }
+
+    //Funcion que muestra los resultados en la sección de texto de abajo, dandoles formato.
     public void mostrarResultados(double[] resultados, String[] descripciones, String[] unidades) {
         // Asegura que todos los arreglos tengan el mismo tamaño
         if (resultados.length != descripciones.length || descripciones.length != unidades.length) {
@@ -413,7 +424,9 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         outputResult.setText(spannable);
     }
 
+    //Función de Iteración del cálculo de Manning, parámetro de entada el calado.
     public void repetirCalculo(double yCalculo) {
+        //Los valores de funciones se utilizan en radianes, y las unidades se calculan en metros.
         y = yCalculo;
         thetha = 2 * Math.acos(1 - (y / radio));
         areaCalc = 0.5 * (radio * radio) * (thetha - Math.sin(thetha));
@@ -426,6 +439,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         qCalc = velocidad * areaCalc * 1000;
     }
 
+    //Función de calculo iterativo usando Manning.
     public void calculateResult() {
         try {
             // Obtener y convertir los valores de entrada
@@ -435,7 +449,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             s = Double.parseDouble(inputS.getText().toString());
 
             radio = (dd / 2) / 100; // Radio en metros
-
+            //definir un calado inicial bajo
             y = 0.0001;
             qCalc = 0;
             double incremento = 0.001;
@@ -455,13 +469,14 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
                 y = Math.min(y, dd);
                 iteraciones++;
             }
-
+            //No permitir iteraciones infinitas
             if (iteraciones >= iteracionesMax) {
                 throw new ArithmeticException("No se encontró solución dentro del máximo de iteraciones.");
             }
+            //definir un factor de friccion de 0 para evitar errores NA
             factorFriccion = 0;
             showResult();
-
+            //Mostrar mensajes de error en caso de datos ingresados inválidos.
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Por favor, ingresa todos los valores correctamente.", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
@@ -469,6 +484,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         }
     }
 
+    //Función para realizar el cálculo iterativo de darcy.
     public void calculateDarcy() {
         try {
             qd = Double.parseDouble(inputQd.getText().toString());
@@ -484,20 +500,22 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             double tolerancia = 1e-6;
             double iteracionesMax = 1e6;
             double iteraciones = 0;
-
+            //Función iterativa que verifica tolerancia y exceso de iteraciones
             while (Math.abs(qCalc - qd) > tolerancia && iteraciones < iteracionesMax) {
                 repetirCalculoYDarcy(y); // Calcula el caudal qCalc para el valor actual de y
 
+                //Función que asegura una tolerancia baja, realiza divisiones del incremento de ser necesario
                 if (qCalc < qd) {
                     y += incremento; // Incrementa y si qCalc es menor que qd
                 } else {
                     incremento /= 2; // Reduce el incremento para mayor precisión
                     y -= incremento; // Retrocede si excedemos el caudal objetivo
                 }
+                //Seleccionar el valor mínimo en caso de errores.
                 y = Math.min(y, dd);
                 iteraciones++;
             }
-
+            //Llamar a la función de muestra de resultados
             showResult();
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Por favor, ingresa todos los valores correctamente.", Toast.LENGTH_SHORT).show();
@@ -505,10 +523,12 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+    //Función de cálculo del factor de fricción, recibe como parámetro el Dh.
 
     public void calcularFactorDeFriccion(double Dh) {
-        double U = 1.5e-6; // Viscosidad cinemática en m^2/s
+        double U = 1.5e-6; // Viscosidad cinemática en m^2/s, utiliza sedimentos.
         double f = 0.02; // Factor de fricción inicial
+        //Definicion de tolerancia e iteraciones máximas
         double tolerancia = 1e-10;
         double iteracionesMax = 100;
         double iteraciones = 0;
@@ -537,7 +557,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             // Validar convergencia
             if (Math.abs(diferencia) < tolerancia) {
                 factorFriccion = f;
-               // Log.d("Darcy", "El factor hallado es: " + f + " en " + iteraciones + " iteraciones");
                 return;
             }
 
@@ -562,15 +581,15 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
                 factorFriccion = Double.NaN;
                 return;
             }
-
+            //Incremento de iteraciones
             iteraciones++;
         }
-
-        // Si se alcanzó el límite de iteraciones sin converger
+        // Si se alcanzó el límite de iteraciones sin converger se muestra un mensaje de error
         Log.w("Darcy", "El cálculo de f no convergió después de " + iteracionesMax + " iteraciones");
         factorFriccion = Double.NaN;
     }
 
+    //Función de iteacion del cálculo de Darcy
     public void repetirCalculoYDarcy(double yParametro) {
         y = yParametro;
 
@@ -605,7 +624,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         //Log.d("Darcy", "Calado (y): " + y + ", Factor de fricción: " + factorFriccion + ", Velocidad: " + velocidad + ", Caudal: " + qCalc);
     }
 
-    double porcentajeLlenado;
 
     public void showResult() {
         y = y * 100;// (cm)
@@ -613,7 +631,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         perimetroCalc = perimetroCalc * 100;
         String tipodeFlujo = "";
         dd = Double.parseDouble(inputDd.getText().toString());
-        porcentajeLlenado = areaCalc / (Math.PI * dd * dd / 4) * 100;
+        porcentajeLlenado = (y / D)*100;
         if (Fr > 1) {
             tipodeFlujo = "Flujo supercrítico";
         }
@@ -623,9 +641,9 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         if (Fr < 1) {
             tipodeFlujo = "Flujo subcrítico";
         }
-
+        //creación de matrices de números y correspondientes descripciones y unidades para muestra de resultados.
         double[] resultados = {y, areaCalc, perimetroCalc, velocidad, qCalc, T, Fr, porcentajeLlenado, factorFriccion};
-        String[] descripciones = {"Calado", "Área", "Perímetro", "Velocidad", "Caudal", "Espejo de agua", "Froude", "Porcentaje de llenado", "Factor de Fricción"};
+        String[] descripciones = {"Calado", "Área", "Perímetro", "Velocidad", "Caudal", "Espejo de agua", "Froude", "y/D", "Factor de Fricción"};
         String[] unidades = {"(cm)", "(cm^2)", "(cm)", "(m/s)", "(l/s)", "(m)", "  " + tipodeFlujo, "%", "-"};
         mostrarResultados(resultados, descripciones, unidades);
     }
