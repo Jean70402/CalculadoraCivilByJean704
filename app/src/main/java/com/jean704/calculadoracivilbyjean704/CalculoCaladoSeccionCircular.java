@@ -632,7 +632,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         perimetroCalc = perimetroCalc * 100;
         String tipodeFlujo = "";
         dd = Double.parseDouble(inputDd.getText().toString());
-        porcentajeLlenado = (y / D)*100;
+        porcentajeLlenado = (y / D)/100;
         if (Fr > 1) {
             tipodeFlujo = "Flujo supercrítico";
         }
