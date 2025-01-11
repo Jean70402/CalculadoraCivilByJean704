@@ -198,7 +198,8 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         }
     }
 
-
+    //Funcion para cargar un archivo de excel, se utiliza al momento de cargar un archivo y generar todos los resultados
+    //Esta función solo calcula mediante Darcy.
     public void seleccionarArchivoExcel() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -261,7 +262,8 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         }
         return filePath;
     }
-
+    //Función de carga de archivo excel a iteracion de Darcy, para calcular varias tuberías
+    //al mismo tiempo, luego del cálculo se envia mediante WhatsApp.
     public void procesarArchivoExcel(String filePath) {
         try {
             // Abrir el archivo Excel
@@ -526,7 +528,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
     //Función de cálculo del factor de fricción, recibe como parámetro el Dh.
 
     public void calcularFactorDeFriccion(double Dh) {
-        double U = 1.5e-6; // Viscosidad cinemática en m^2/s, utiliza sedimentos.
+        double U = 1.5e-6; // Viscosidad cinemática en m^2/s, utiliza flotantes.
         double f = 0.02; // Factor de fricción inicial
         //Definicion de tolerancia e iteraciones máximas
         double tolerancia = 1e-10;
