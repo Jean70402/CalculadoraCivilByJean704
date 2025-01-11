@@ -625,7 +625,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
 
     }
 
-
     public void showResult() {
         y = y * 100;// (cm)
         areaCalc = areaCalc * 100 * 100;
