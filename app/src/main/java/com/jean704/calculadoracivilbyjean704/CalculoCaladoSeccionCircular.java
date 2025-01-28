@@ -5,11 +5,15 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +39,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class CalculoCaladoSeccionCircular extends AppCompatActivity {
@@ -57,10 +62,14 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
     //Funciones de inicialización y lectura de datos.
     private ActivityResultLauncher<Intent> saveFileLauncher;
 
+    double U = 1.5e-6; // Viscosidad cinemática en m^2/s, utiliza flotantes.
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.calado_tuberia_circular);
+
 
         // Inicializamos los campos de entrada y el campo de salida
         inputQd = findViewById(R.id.inputQd);
@@ -94,8 +103,62 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
             }
         });
 
-    }
+        // Referencias a los CheckBoxes y el EditText
+        CheckBox checkboxFlotantes = findViewById(R.id.checkbox_flotantes);
+        CheckBox checkboxAguaLimpia = findViewById(R.id.checkbox_agua_limpia);
+        CheckBox checkboxPersonalizado = findViewById(R.id.checkbox_personalizado);
+        EditText inputViscCinem = findViewById(R.id.inputViscCinem);
 
+        // Valores asociados a los CheckBoxes
+        final double flotantesValue = 1.5e-6;
+        final double aguaLimpiaValue = 1.004e-6;
+
+        // Lista de CheckBoxes para controlar exclusividad
+        List<CheckBox> checkBoxes = new ArrayList<>();
+        checkBoxes.add(checkboxFlotantes);
+        checkBoxes.add(checkboxAguaLimpia);
+        checkBoxes.add(checkboxPersonalizado);
+
+        // Listener para manejar selección exclusiva de CheckBoxes
+        for (CheckBox checkBox : checkBoxes) {
+            checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    // Desmarcar los otros CheckBoxes
+                    for (CheckBox cb : checkBoxes) {
+                        if (cb != checkBox) {
+                            cb.setChecked(false);
+                        }
+                    }
+
+                    // Actualizar el valor de U según la selección
+                    if (checkBox == checkboxFlotantes) {
+                        inputViscCinem.setVisibility(View.GONE); // Ocultar el EditText
+                        U = flotantesValue; // Asignar el valor a U
+                        Toast.makeText(CalculoCaladoSeccionCircular.this, "Valor seleccionado: " + U, Toast.LENGTH_SHORT).show();
+                    } else if (checkBox == checkboxAguaLimpia) {
+                        inputViscCinem.setVisibility(View.GONE); // Ocultar el EditText
+                        U = aguaLimpiaValue; // Asignar el valor a U
+                        Toast.makeText(CalculoCaladoSeccionCircular.this, "Valor seleccionado: " + U, Toast.LENGTH_SHORT).show();
+                    } else if (checkBox == checkboxPersonalizado) {
+                        inputViscCinem.setVisibility(View.VISIBLE); // Mostrar el EditText
+                        String inputValue = inputViscCinem.getText().toString();
+                        if (!inputValue.isEmpty()) {
+                            try {
+                                U = Double.parseDouble(inputValue) * 1e-6; // Asignar el valor personalizado a U
+                                Toast.makeText(CalculoCaladoSeccionCircular.this, "Valor personalizado: " + U, Toast.LENGTH_SHORT).show();
+                            } catch (NumberFormatException e) {
+                                Toast.makeText(CalculoCaladoSeccionCircular.this, "Por favor, ingresa un valor válido", Toast.LENGTH_SHORT).show();
+                                checkBox.setChecked(false);
+                            }
+                        } else {
+                            Toast.makeText(CalculoCaladoSeccionCircular.this, "Por favor, ingresa un valor", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+        }
+
+    }
     //Funcion de guardado de acciones en caso de querer calcular de uno en uno las tuberías.
     public void guardarAccion() {
         try {
@@ -528,7 +591,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
     //Función de cálculo del factor de fricción, recibe como parámetro el Dh.
 
     public void calcularFactorDeFriccion(double Dh) {
-        double U = 1.5e-6; // Viscosidad cinemática en m^2/s, utiliza flotantes.
         double f = 0.02; // Factor de fricción inicial
         //Definicion de tolerancia e iteraciones máximas
         double tolerancia = 1e-10;
@@ -631,7 +693,7 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
         perimetroCalc = perimetroCalc * 100;
         String tipodeFlujo = "";
         dd = Double.parseDouble(inputDd.getText().toString());
-        porcentajeLlenado = (y / D)/100;
+        porcentajeLlenado = (y / dd)*100;
         if (Fr > 1) {
             tipodeFlujo = "Flujo supercrítico";
         }
