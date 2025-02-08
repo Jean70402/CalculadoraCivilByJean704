@@ -157,7 +157,6 @@ public class CalculoCaladoSeccionCircular extends AppCompatActivity {
                 }
             });
         }
-
     }
     //Funcion de guardado de acciones en caso de querer calcular de uno en uno las tuberías.
     public void guardarAccion() {
